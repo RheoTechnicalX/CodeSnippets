@@ -1,0 +1,103 @@
+################################## Conda environemnt   gis_env
+################################## Import packages and print version for each
+
+
+import sys
+import psycopg2
+import sqlalchemy
+from sqlalchemy import engine
+import pandas as pd
+pd.set_option('display.max_rows', None)
+import geopandas
+import matplotlib
+import folium
+from datetime import datetime
+timestamp = datetime.now()
+from psycopg2 import Error
+print('python:', sys.version_info)
+print('psycopg2:', psycopg2.__version__)
+print('sqlal:', sqlalchemy.__version__)
+print('pandas:', pd.__version__)
+print('geopands:', geopandas.__version__)
+print('matplotlib:', matplotlib.__version__)
+print('folium:', folium.__version__)
+print('time stamp:',timestamp)
+#
+db_params = {"host":"localhost", "database":"rt", "user":"postgres", "password":"password", "port":"5433"}
+try: connection = psycopg2.connect(**db_params)
+except Error as e:
+    print(f"Failed to connect: {e}")
+print("yeah, I'm still here")
+#
+cursor = connection.cursor()
+cursor.execute("SELECT version();")
+pg_version = cursor.fetchone()[0]
+print(f"postgresql version: {pg_version}")
+#
+cursor = connection.cursor()
+cursor.execute("SELECT postgis_version();")
+postgis_version = cursor.fetchone()[0]
+print(f"postgis version: {postgis_version}")
+
+
+#
+#pandas doesnt play well without sqlalchemy but psycopg2 does make the basic connection to postgres
+#
+
+
+from sqlalchemy import create_engine
+cs = 'postgresql://postgres:password@localhost:5433/rt'
+e = create_engine(cs)
+query = " SELECT * FROM countries LIMIT 1 "
+df = pd.read_sql(query,e)
+display (df)
+
+
+#
+# I'm going to move towards Folium. When I connected QGIS it needed a geometry column in the table to talk to. I read that Folium does not.
+# 
+# Folium's default base map is OSM
+# 
+# These coordinates are from my online training course without metadata; going with Folium defaults of WGS 84, ie; coordinate system mataching not required
+#
+# Folium expects lat, Lon (Y, X)
+#
+# Let's do a map witout pulling from coordinates
+#
+
+
+my_map = folium.Map(location=[0.0,-0.0], zoom_start=5, tiles="CartoDB Positron", attr="Map tiles by CartoDB")
+my_map
+
+
+#
+# Let's grab some Y Latitude , X longitude coordinates
+#
+
+
+query = """ SELECT * FROM countries LIMIT 0 """
+df = pd.read_sql(query,e)
+display (df)
+
+
+#
+# Folium requires Y, X
+#
+
+
+query = """ SELECT cap_lat AS Y, cap_long AS X, capital FROM countries """
+df = pd.read_sql(query,e)
+df_clean = df.dropna(subset=['y','x'])
+display(df_clean)
+
+
+#
+# Adding Icons and pop-up labels aka Tool Tips
+#
+
+
+my_map=folium.Map(location=[0,0], zoom_start=2)
+for index, row in df_clean.iterrows():
+    folium.Marker(location=[row['y'], row['x']], icon=folium.Icon(color="blue"), popup=f"Lat: {row['y']}, Long: {row['x']}, Capital:{row['capital']}").add_to(my_map)
+my_map.save("Country_Capitals.html")
+my_map
