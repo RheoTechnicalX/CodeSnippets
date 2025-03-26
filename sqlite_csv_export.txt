@@ -1,0 +1,50 @@
+import sys
+import pandas as pd
+import sqlite3 as sql3
+import psycopg2
+import sqlalchemy
+from sqlalchemy import engine
+
+############################################# Connect to sqlite database
+
+try:
+    c = sql3.connect('database.sqlite')
+    print("Yeah I'm here")
+except sql3.Error as f:
+    print(f"Connection failed: {f}")
+
+############################################# Get a list of tables
+
+query = """
+SELECT name
+FROM sqlite_master
+WHERE type = 'table';"""
+df = pd.read_sql(query,c)
+display (df)
+
+############################################# Get the data types
+
+table_name = 'Player_Attributes'
+query = f"PRAGMA table_info({table_name})"
+df = pd.read_sql(query,c)
+display (df)
+
+############################################# Export table data types to .csv
+
+df.to_csv('table_name.csv',index=False)
+print("Done, check file")
+
+############################################# Set-up to export table values to .csv
+
+query = """
+SELECT *
+FROM Player_Attributes;"""
+df = pd.read_sql(query,c)
+display (df)
+
+############################################# Export table values to .csv
+
+df.to_csv('Players_Attributes.csv',index=False)
+print("Done, check file")
+
+############################################# Done.
