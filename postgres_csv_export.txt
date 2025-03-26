@@ -1,0 +1,85 @@
+import sys
+import pandas as pd
+import sqlite3 as sql3
+import psycopg2
+import sqlalchemy
+from sqlalchemy import engine
+
+########################################### Connect to PostgreSQL
+
+from sqlalchemy import create_engine, text
+cs = 'postgresql://postgres:password@localhost:5433/rt'
+e = create_engine(cs)
+query = " SELECT * FROM countries LIMIT 1 "
+df = pd.read_sql(query,e)
+display (df)
+
+########################################### Create table and Import data types for Fields
+
+from sqlalchemy import create_engine, text
+import pandas as pd
+cs = 'postgresql://postgres:password@localhost:5433/rt'
+e = create_engine(cs)
+query = """
+CREATE TABLE Players_Attributes (
+    id INTEGER PRIMARY KEY,
+    player_fifa_api_id INTEGER,
+    player_api_id INTEGER,
+    date TEXT,
+    overall_rating INTEGER,
+    potential INTEGER,
+    preferred_foot TEXT,
+    attacking_work_rate TEXT,
+    defensive_work_rate TEXT,
+    crossing INTEGER,
+    finishing INTEGER,
+    heading_accuracy INTEGER,
+    short_passing INTEGER,
+    volleys INTEGER,
+    dribbling INTEGER,
+    curve INTEGER,
+    free_kick_accuracy INTEGER,
+    long_passing INTEGER,
+    ball_control INTEGER,
+    acceleration INTEGER,
+    sprint_speed INTEGER,
+    agility INTEGER,
+    reactions INTEGER,
+    balance INTEGER,
+    shot_power INTEGER,
+    jumping INTEGER,
+    stamina INTEGER,
+    strength INTEGER,
+    long_shots INTEGER,
+    aggression INTEGER,
+    interceptions INTEGER,
+    positioning INTEGER,
+    vision INTEGER,
+    penalties INTEGER,
+    marking INTEGER,
+    standing_tackle INTEGER,
+    sliding_tackle INTEGER,
+    gk_diving INTEGER,
+    gk_handling INTEGER,
+    gk_kicking INTEGER,
+    gk_positioning INTEGER,
+    gk_reflexes INTEGER); """
+#############################    NEED TO REVIEW THIS try:   Note I am writing to the table now ############
+try:
+    with e.connect() as connection:
+        connection.execute(text(query))  # Use text() for raw SQL
+        connection.commit()  # Commit the transaction
+        print("Table 'Players_Attributes' created successfully!")
+except Exception as error:
+    print(f"Error: {error}")
+
+########################################### Verify new table and field types
+
+query = """
+SELECT column_name, data_type 
+FROM information_schema.columns
+WHERE table_name = 'players_attributes';"""
+df = pd.read_sql(query,e)
+display (df)
+
+########################################### More on the way
